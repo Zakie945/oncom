@@ -1,12 +1,93 @@
-version: '2.1'
-orbs:
-  win: circleci/windows@2.4
-jobs:
-  build:
-    executor: win/gpu-nvidia
-    steps:
-      - run: '&"C:\Program Files\NVIDIA Corporation\NVSMI\nvidia-smi.exe"'
-workflows:
-  my-workflow:
-    jobs:
-      - build
+# This code is licensed from CircleCI to the user under the MIT license.
+# See here for details: https://circleci.com/developer/orbs/licensing
+version: 2.1
+description: Execute your CI pipelines on Windows in the cloud with Nvidia GPU support.
+display:
+    home_url: https://circleci.com/build-environments/windows
+    source_url: https://github.com/CircleCI-Public/windows-orb
+executors:
+    default:
+        description: |
+            An executor preloaded with Visual Studio 2019 plus a number of other development tools.
+        machine:
+            image: windows-server-2019-vs2019:<< parameters.version >>
+            resource_class: windows.<< parameters.size >>
+            shell: << parameters.shell >>
+        parameters:
+            shell:
+                default: powershell.exe -ExecutionPolicy Bypass
+                description: The shell to use. Defaults to `powershell.exe -ExecutionPolicy Bypass`
+                type: string
+            size:
+                default: medium
+                description: The size of Windows resource to use. Defaults to medium.
+                enum:
+                    - medium
+                    - large
+                    - xlarge
+                    - 2xlarge
+                type: enum
+            version:
+                default: stable
+                description: The image version to use when executing. Defaults to "stable".
+                type: string
+    gpu-nvidia:
+        description: |
+            An executor with an Nvidia GPU which includes a pre-installed CUDA runtime and the cuDNN library.
+        machine:
+            image: windows-server-2019-nvidia:<< parameters.version >>
+            resource_class: windows.gpu.nvidia.<< parameters.size >>
+            shell: << parameters.shell >>
+        parameters:
+            shell:
+                default: powershell.exe -ExecutionPolicy Bypass
+                description: The shell to use. Defaults to `powershell.exe -ExecutionPolicy Bypass`
+                type: string
+            size:
+                default: medium
+                description: The size of Windows GPU resource to use. Defaults to medium.
+                enum:
+                    - small
+                    - medium
+                    - large
+                type: enum
+            version:
+                default: stable
+                description: The image version to use when executing. Defaults to "stable".
+                type: string
+examples:
+    run_windows_default:
+        description: This is an example of running a simple job on the default Windows executor
+        usage:
+            version: "2.1"
+            orbs:
+                win: circleci/windows@2.4
+            jobs:
+                build:
+                    executor:
+                        name: win/default
+                        size: medium
+                    steps:
+                        - checkout
+                        - run: Write-Host 'Hello, Windows'
+            workflows:
+                my-workflow:
+                    jobs:
+                        - build
+    run_windows_nvidia-gpu:
+        description: |
+            This is an example of running a simple job on the Nvidia GPU executor
+        usage:
+            version: "2.1"
+            orbs:
+                win: circleci/windows@2.4
+            jobs:
+                build:
+                    executor: win/gpu-nvidia
+                    steps:
+                        - run: '&"C:\Program Files\NVIDIA Corporation\NVSMI\nvidia-smi.exe"'
+            workflows:
+                my-workflow:
+                    jobs:
+                        - build
+
